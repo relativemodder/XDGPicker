@@ -1,0 +1,16 @@
+{
+	"geode": "4.0.1",
+	"gd": {
+		"win": "2.2074"
+	},
+	"id": "relative.xdgpicker",
+	"name": "XDGPicker",
+	"version": "v1.0.0",
+	"developer": "Relative",
+	"description": "This mod is made only AND ONLY FOR LINUX!!!",
+	"resources": {
+		"files": [
+			"src/server.py"
+		]
+	}
+}
