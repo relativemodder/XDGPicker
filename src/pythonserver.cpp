@@ -69,6 +69,26 @@ size_t pwriteFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
 }
 
 
+geode::Task<bool> PythonServer::isServerAlive() {
+  return geode::Task<bool>::runWithCallback(
+        [] 
+        (auto resolve, auto progress, auto cancelled) {
+            geode::utils::web::WebRequest req = geode::utils::web::WebRequest();
+
+            req.get("http://127.0.0.1:8912").listen([resolve](geode::utils::web::WebResponse* response) {
+                if (response->ok() == false) {
+                  geode::log::error("Listen you, damn, the response is not ok yk???");
+                  resolve(false);
+                  return;
+                }
+                resolve(true);
+            });
+
+        
+    }, "Bullshit");
+}
+
+
 geode::Task<std::string> PythonServer::makeGetRequest(std::string path) {
     return geode::Task<std::string>::runWithCallback(
         [path = path] 

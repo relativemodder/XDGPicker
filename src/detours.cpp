@@ -1,3 +1,4 @@
+#include "Geode/loader/Log.hpp"
 #include "Geode/utils/web.hpp"
 #include "winepath.hpp"
 #include "pythonserver.hpp"
@@ -14,11 +15,18 @@ bool linuxOpenFolder(std::filesystem::path const& path) {
 
     auto req = web::WebRequest();
     req.get(
-        fmt::format(
-            "http://127.0.0.1:8912/openfilemanager/file://{}", 
-            unixPathBuffer
+        ReplaceAll(
+            fmt::format(
+                "http://127.0.0.1:8912/openfilemanager/file://{}", 
+                unixPathBuffer
+            ), " ", "%20"
         )
     ).listen([](web::WebResponse* res){
+        if (res->ok() == false) {
+            auto wtf = res->string().err();
+            geode::log::error("Hey you! We've got a problem here: {}", wtf);
+            return;
+        }
         geode::log::debug("Holy fuck! File Manager opened!");
     });
 
@@ -34,7 +42,7 @@ geode::Task<geode::Result<std::filesystem::path>> linuxFilePick(
 ) {
 	using RetTask = geode::Task<geode::Result<std::filesystem::path>>;
 
-    return RetTask::runWithCallback([mode] (auto resolve, auto progress, auto cancelled) {
+    return RetTask::runWithCallback([mode, options] (auto resolve, auto progress, auto cancelled) {
         switch (mode) {
             case geode::utils::file::PickMode::OpenFile:
                 pickerPath = std::string("/openfile");
@@ -42,6 +50,12 @@ geode::Task<geode::Result<std::filesystem::path>> linuxFilePick(
             
             case geode::utils::file::PickMode::SaveFile:
                 pickerPath = std::string("/savefile");
+
+                if (!options.defaultPath->empty()) {
+                    auto suggestedName = options.defaultPath.value();
+                    pickerPath = fmt::format("/savefile/{}", ReplaceAll(suggestedName.string(), " ", "%20"));
+                }
+
                 break;
             
             case geode::utils::file::PickMode::OpenFolder:

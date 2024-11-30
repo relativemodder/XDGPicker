@@ -10,7 +10,8 @@
 	"description": "This mod is made only AND ONLY FOR LINUX!!!",
 	"resources": {
 		"files": [
-			"src/server.py"
+			"src/server.py",
+			"src/guide.pdf"
 		]
 	}
 }

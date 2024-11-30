@@ -17,4 +17,5 @@ public:
     bool copyFiles();
     bool start();
     geode::Task<std::string> makeGetRequest(std::string path);
+    geode::Task<bool> isServerAlive();
 };

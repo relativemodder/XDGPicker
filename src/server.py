@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import dbus
 import dbus.mainloop.glib
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -23,7 +25,8 @@ def bus_call_picker(
         open_ = False, 
         save_ = False,
         multiple_ = False,
-        directory_ = False
+        directory_ = False,
+        proposed_name_ = ""
     ):
     global bus
     global loop 
@@ -42,7 +45,9 @@ def bus_call_picker(
             }
         )
     elif save_:
-        inter.SaveFile('', 'Save File', {})
+        inter.SaveFile('', 'Save File', {
+            'current_name': proposed_name_
+        })
     else:
         print('wtf do you want???')
         return None
@@ -82,8 +87,9 @@ class S(BaseHTTPRequestHandler):
     def _opensave(self):
         dbus_result = bus_call_picker(
             open_=(self.path == '/openfile' or self.path == '/opendirectory'),
-            save_=self.path == '/savefile',
-            directory_=self.path == '/opendirectory'
+            save_=self.path.startswith('/savefile'),
+            directory_=self.path == '/opendirectory',
+            proposed_name_=self.path.removeprefix('/savefile/').replace('%20', ' ') if self.path.startswith('/savefile/') else ""
         )
 
         uris = list(map(str, list(dbus_result['uris']))) # Fuck you dbus
@@ -115,7 +121,7 @@ class S(BaseHTTPRequestHandler):
         self._set_headers()
 
         if (self.path == '/openfile' 
-            or self.path == '/savefile'
+            or self.path.startswith('/savefile')
             or self.path == '/opendirectory'):
 
             return self._opensave()
