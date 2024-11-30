@@ -26,48 +26,48 @@ $execute {
 		return;
 	}
 
-	HANDLE s_outHandle = nullptr;
+	// HANDLE s_outHandle = nullptr;
+// 
+	// s_outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	// if (!s_outHandle && AttachConsole(ATTACH_PARENT_PROCESS)) {
+	// 	s_outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	// }
+// 
+	// std::string path;
+    // DWORD dummy;
+	// char buf[MAX_PATH + 1];
+    // auto count = GetFinalPathNameByHandleA(s_outHandle, buf, MAX_PATH + 1,
+    //     FILE_NAME_OPENED | VOLUME_NAME_NT);
+// 
+    // if (count != 0) {
+    //     path = std::string(buf, count - 1);
+    // }
+// 
+	// if ((count == 0 || path.ends_with("\\dev\\null"))) {
+	// 	
+	// 	Loader::get()->getLoadedMod("geode.loader")->setSettingValue("show-platform-console", true);
+// 
+	// 	auto consoleWindow = GetConsoleWindow();
+// 
+	// 	if (consoleWindow == nullptr) {
+	// 		auto result = MessageBox(NULL, "Running with redirected stdout to /dev/null, restart?", "Wine/Proton Bug", MB_OKCANCEL);
+// 
+	// 		if (result == IDOK) {
+	// 			geode::utils::game::restart();
+	// 			return;
+	// 		}
+// 
+	// 		MessageBox(NULL, "Ok, that's your decision, good luck lol", "Ok then", MB_OKCANCEL);
+	// 	}
+// 
+	// 	ShowWindow(consoleWindow, SW_HIDE);
+	// }
 
-	s_outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (!s_outHandle && AttachConsole(ATTACH_PARENT_PROCESS)) {
-		s_outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	}
 
-	std::string path;
-    DWORD dummy;
-	char buf[MAX_PATH + 1];
-    auto count = GetFinalPathNameByHandleA(s_outHandle, buf, MAX_PATH + 1,
-        FILE_NAME_OPENED | VOLUME_NAME_NT);
-
-    if (count != 0) {
-        path = std::string(buf, count - 1);
-    }
-
-	if ((count == 0 || path.ends_with("\\dev\\null"))) {
-		
-		Loader::get()->getLoadedMod("geode.loader")->setSettingValue("show-platform-console", true);
-
-		auto consoleWindow = GetConsoleWindow();
-
-		if (consoleWindow == nullptr) {
-			auto result = MessageBox(NULL, "Running with redirected stdout to /dev/null, restart?", "Wine/Proton Bug", MB_OKCANCEL);
-
-			if (result == IDOK) {
-				geode::utils::game::restart();
-				return;
-			}
-
-			MessageBox(NULL, "Ok, that's your decision, good luck lol", "Ok then", MB_OKCANCEL);
-		}
-
-		ShowWindow(consoleWindow, SW_HIDE);
-	}
-
-
-	if (!PythonServer::getInstance()->start()) {
-		Notification::create("Failed to start the Python server :(", NotificationIcon::Error);
-		return;
-	}
+	// if (!PythonServer::getInstance()->start()) {
+	// 	Notification::create("Failed to start the Python server :(", NotificationIcon::Error);
+	// 	return;
+	// }
 	
 
 	Mod::get()->hook(
