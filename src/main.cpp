@@ -1,16 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/MenuLayer.hpp>
-#include <WinUser.h>
-#include <consoleapi3.h>
 #include <filesystem>
-#include "Geode/binding/MenuLayer.hpp"
-#include "Geode/cocos/actions/CCActionInstant.h"
-#include "Geode/cocos/actions/CCActionInterval.h"
-#include "Geode/cocos/platform/win32/CCApplication.h"
-#include "Geode/loader/Hook.hpp"
-#include "Geode/modify/Modify.hpp"
-#include "Geode/ui/Popup.hpp"
-#include "Geode/utils/general.hpp"
+#include "Geode/binding/FLAlertLayer.hpp"
 #include "pythonserver.hpp"
 #include "winepath.hpp"
 #include "wineutils.hpp"
@@ -27,13 +18,73 @@ geode::Hook* pickManyHook;
 
 class $modify(PickerMenuLayer, MenuLayer) {
 
+	void addToClipboard(char* pszText) {
+		int nStrLen = strlen(pszText);
+		HGLOBAL hMem = GlobalAlloc(nStrLen + 1, GMEM_SHARE);
+		char* pCopyTo = (char*) GlobalLock(hMem);
+		strcpy(pCopyTo, pszText);
+		GlobalUnlock(hMem);
+		OpenClipboard(NULL);
+		EmptyClipboard();
+
+		SetClipboardData(CF_TEXT, hMem);
+		CloseClipboard();
+	}
+
 	void tutorialStep1() {
 		log::info("Tutorial: Step 1");
 		auto wine_home_dir = WinePath::getInstance()->getUnixHome();
 		log::info("Home: {}", wine_home_dir);
 
-		CCApplication::get()->openURL("Placeholder");
+		auto guideURL = "https://raw.githubusercontent.com/relativemodder/XDGPicker/refs/heads/main/src/guide.pdf";
+		addToClipboard((char*)guideURL);
 
+
+		auto originalServerPath = std::filesystem::canonical(PythonServer::getInstance()->scriptPath);
+		auto originalServerPathInWindows = WinePath::getInstance()->getWindowsFilePath(originalServerPath.string());
+
+		auto destinationServerPath = wine_home_dir + "/picker_server.py";
+		auto destinationServerPathInWindows = WinePath::getInstance()->getWindowsFilePath(destinationServerPath);
+
+		try {
+			std::filesystem::copy(originalServerPathInWindows, destinationServerPathInWindows, std::filesystem::copy_options::overwrite_existing);
+		}
+		catch (const std::exception& e) {
+			log::error("Failed to copy server script: {}", e.what());
+			return;
+		}
+		
+
+		auto originalDesktopPath = std::filesystem::canonical("geode/unzipped/relative.xdgpicker/resources/relative.xdgpicker/picker_server.desktop");
+		auto originalDesktopPathInWindows = WinePath::getInstance()->getWindowsFilePath(originalDesktopPath.string());
+
+		auto destinationDesktopPath = wine_home_dir + "/.config/autostart/picker_server.desktop";
+		auto destinationDesktopPathInWindows = WinePath::getInstance()->getWindowsFilePath(destinationDesktopPath);
+
+		std::ifstream originalDesktopFile(originalDesktopPathInWindows);
+		std::ofstream destinationDesktopFile(destinationDesktopPathInWindows);
+
+		std::string line;
+		while (std::getline(originalDesktopFile, line)) {
+			size_t pos = line.find("<home>");
+			if (pos != std::string::npos) {
+				line.replace(pos, 6, wine_home_dir);
+			}
+			destinationDesktopFile << line << "\n";
+		}
+
+		originalDesktopFile.close();
+		destinationDesktopFile.close();
+
+		FLAlertLayer::create(
+			"Attention", 
+			fmt::format(
+					"Server autostart file was copied to <cy>{}</c>. Relogin into your <cg>desktop environment</c>.\n\n{}", 
+					destinationDesktopPath,
+					"<cl>Guide link</c> was copied to your <cr>clipboard.</c>"
+				), 
+			"OK"
+		)->show();
 	}
 
 	void transitionToStep(int step) {
@@ -75,7 +126,7 @@ class $modify(PickerMenuLayer, MenuLayer) {
 			pickManyHook->disable();
 
 			geode::createQuickPopup(
-				"Oops", "Looks like your Python Side is not running. Proceed to the tutorial?", 
+				"Oops", "Looks like your Python Side <cr>is not running.</c> Copy it to the autostart directory?", 
 				"No", "Yes", 
 				[self](auto, bool btn2) {
 					if (btn2) {
@@ -111,50 +162,44 @@ $execute {
 		return;
 	}
 
+	HANDLE s_outHandle = nullptr;
 
-	// HANDLE s_outHandle = nullptr;
-// 
-	// s_outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	// if (!s_outHandle && AttachConsole(ATTACH_PARENT_PROCESS)) {
-	// 	s_outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	// }
-// 
-	// std::string path;
-    // DWORD dummy;
-	// char buf[MAX_PATH + 1];
-    // auto count = GetFinalPathNameByHandleA(s_outHandle, buf, MAX_PATH + 1,
-    //     FILE_NAME_OPENED | VOLUME_NAME_NT);
-// 
-    // if (count != 0) {
-    //     path = std::string(buf, count - 1);
-    // }
-// 
-	// if ((count == 0 || path.ends_with("\\dev\\null"))) {
-	// 	
-	// 	Loader::get()->getLoadedMod("geode.loader")->setSettingValue("show-platform-console", true);
-// 
-	// 	auto consoleWindow = GetConsoleWindow();
-// 
-	// 	if (consoleWindow == nullptr) {
-	// 		auto result = MessageBox(NULL, "Running with redirected stdout to /dev/null, restart?", "Wine/Proton Bug", MB_OKCANCEL);
-// 
-	// 		if (result == IDOK) {
-	// 			geode::utils::game::restart();
-	// 			return;
-	// 		}
-// 
-	// 		MessageBox(NULL, "Ok, that's your decision, good luck lol", "Ok then", MB_OKCANCEL);
-	// 	}
-// 
-	// 	ShowWindow(consoleWindow, SW_HIDE);
-	// }
+	s_outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (!s_outHandle && AttachConsole(ATTACH_PARENT_PROCESS)) {
+		s_outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	}
 
+	std::string path;
+    DWORD dummy;
+	char buf[MAX_PATH + 1];
+    auto count = GetFinalPathNameByHandleA(s_outHandle, buf, MAX_PATH + 1,
+        FILE_NAME_OPENED | VOLUME_NAME_NT);
 
-	// if (!PythonServer::getInstance()->start()) {
-	// 	Notification::create("Failed to start the Python server :(", NotificationIcon::Error);
-	// 	return;
-	// }
-	
+    if (count != 0) {
+        path = std::string(buf, count - 1);
+    }
+
+	if ((count == 0 || path.ends_with("\\dev\\null"))) {
+		
+		Loader::get()->getLoadedMod("geode.loader")->setSettingValue("show-platform-console", true);
+
+		auto consoleWindow = GetConsoleWindow();
+
+		if (consoleWindow == nullptr) {
+			auto result = MessageBox(NULL, "Running with redirected stdout to /dev/null, restart?", "Wine/Proton Bug", MB_OKCANCEL);
+
+			if (result == IDOK) {
+				geode::utils::game::restart();
+				return;
+			}
+
+			MessageBox(NULL, "Ok, that's your decision, good luck lol", "Ok then", MB_OKCANCEL);
+		}
+
+		ShowWindow(consoleWindow, SW_HIDE);
+	}
+
+	PythonServer::getInstance()->setupPaths();
 
 	openFolderHook = Mod::get()->hook(
 		reinterpret_cast<void*>(

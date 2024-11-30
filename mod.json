@@ -11,7 +11,8 @@
 	"resources": {
 		"files": [
 			"src/server.py",
-			"src/guide.pdf"
+			"src/guide.pdf",
+			"src/picker_server.desktop"
 		]
 	}
 }

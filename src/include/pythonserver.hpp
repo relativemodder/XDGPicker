@@ -7,10 +7,11 @@
 
 
 class PythonServer {
+public:
+	std::string scriptPath;
 private:
     std::string oldPythonPath;
 	std::string newPythonPath;
-	std::string scriptPath;
 public:
     static PythonServer* getInstance();
     void setupPaths();
