@@ -8,10 +8,6 @@ project(XDGPicker VERSION 1.0.0)
 
 add_library(${PROJECT_NAME} SHARED
     src/main.cpp
-    src/pythonserver.cpp
-    src/winepath.cpp
-    src/wineutils.cpp
-    src/detours.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})
@@ -24,4 +20,4 @@ add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
 setup_geode_mod(${PROJECT_NAME})
 
-target_include_directories(${PROJECT_NAME} PUBLIC src/include)
+target_link_directories(${PROJECT_NAME} PRIVATE build/geode-deps/relative.linuxapi)

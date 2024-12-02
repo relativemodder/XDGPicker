@@ -1,7 +1,0 @@
-[Desktop Entry]
-Exec=python3 <home>/picker_server.py
-Icon=
-Name=Picker Server
-Path=
-Terminal=False
-Type=Application
