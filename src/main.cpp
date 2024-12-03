@@ -102,6 +102,7 @@ geode::Task<geode::Result<std::vector<std::filesystem::path>>> linuxPickMany(
 					));
 					return;
 				}
+				
 
 				auto filePathStrings = resultPtr->unwrap();
 				auto filePaths = std::vector<std::filesystem::path>();
